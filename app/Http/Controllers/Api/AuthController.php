@@ -30,7 +30,7 @@ class AuthController extends Controller
                 return response()->json([
                     'result' =>  $token,
                     'status' => True,
-                    'message' => 'Invalid login details'
+                    'message' => 'Logged In Successfully'
                 ]);
         }else{
             return response()->json([
@@ -54,6 +54,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email'=> $request->email,
             'password'=> Hash::make($request->password),
+            'user_type' => $request->user_type
         ]);
         $token = $user->createToken('Token')->accessToken;
             return response()->json([
