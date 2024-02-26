@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\API\JobController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,8 +23,14 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register',[AuthController::class,'register']);
 Route::post('/login',[AuthController::class,'login']);
 
+
+
 Route::group([
     "middleware" => ["auth:api"]
 ],function(){
+    Route::get('/job/search',[JobController::class,'search']);
+    Route::get('/job/apply',[JobController::class,'applyForJob']);
+    Route::get('/job/list',[JobController::class,'Joblisting']);
+    Route::resource('/job',JobController::class)->middleware('isEmployer');
     Route::get('logout',[AuthController::class,'logout']);
 });
