@@ -100,18 +100,32 @@ class JobController extends Controller
         if (!$job) {
             return response()->json(['status' => false, 'message' => 'Job not found'], 404);
         }
+        if(auth()->user()->id === $job->created_by ){
         $job->delete();
-        return response()->json(['status' => true, 'message' => 'Job soft deleted']);
+        return response()->json(['status' => true, 'message' => 'Job deleted']);
+    }
+    else{
+        return response()->json([
+            'status' => false,
+            'message' => 'Only Creator Can Delete their list',
+        ], 400);
+    }
+
     }
     public function search(Request $request){
         $keyword = $request->input('keyword');
         $location = $request->input('location');
         $company_name = $request->input('company_name');
-
-        $jobs = JobModel::where('title', 'like', "%$keyword%")
-                        ->orWhere('location','like',"%$location%")
-                        ->orWhere('company_name','like',"%$company_name%")
-            ->get();
+        $jobs = JobModel::when($company_name, function ($query) use ($company_name) {
+            $query->where('company_name', 'like', "%$company_name%");
+        })
+        ->when($keyword, function ($query) use ($keyword) {
+            $query->where('title', 'like', "%$keyword%");
+        })
+        ->when($location, function ($query) use ($location) {
+            $query->orWhere('location', 'like', "%$location%");
+        })
+        ->get();
             return response()->json([
                 'result' => $jobs,
                 'status' => true,
@@ -121,7 +135,6 @@ class JobController extends Controller
         public function applyForJob(Request $request){
             $input = $request->all();
             $validator =  Validator::make($input,[
-                'user_id' => 'required|exists:users,id',
                 'job_id' => 'required|exists:job_models,id',
                 'resume' => 'required',
                 'cover_letter' => 'required',
@@ -130,7 +143,7 @@ class JobController extends Controller
                 return $this->sendError($validator->errors());
             }
             $jobApply = ApplyJobModel::create([
-                'user_id' => $request->user_id,
+                'user_id' => auth()->user()->id,
                 'job_id' => $request->job_id,
                 'resumes' => $request->resume,
                 'cover_letter' => $request->cover_letter,
